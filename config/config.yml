@@ -1,0 +1,33 @@
+database:
+  port: 5432
+  user: neondb_owner
+  password: npg_ce1TbYCx4DwR
+  dbname: AxisMD
+
+audio:
+  dir : "audio/audio_input.wav"
+
+llm:
+  model: "gpt-40-mini"
+  temperature: 0.5
+  max_tokens: 2000
+  top_p: 1.0
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+
+voice_llm:
+  model: "whisper-1"
+  temperature: 0.5
+  max_tokens: 2000
+  threshold: 0.5
+  silence_duration: 0.2
+  noise_reduction: Near field
+
+voice_llm_mini:
+  model: "gpt-4o-mini-transcribe"
+  temperature: 0.5
+  max_tokens: 2000
+  threshold: 0.5
+  silence_duration: 0.2
+  noise_reduction: Near field
+
