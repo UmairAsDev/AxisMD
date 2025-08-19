@@ -2,7 +2,7 @@ database:
   port: 5432
   user: neondb_owner
   password: npg_ce1TbYCx4DwR
-  dbname: AxisMD
+  dbname: neondb
 
 audio:
   dir : "audio/audio_input.wav"
