@@ -41,8 +41,8 @@ class AudioRecorder:
         hard_min_rms: float = 0.005,
         max_seconds: int = 60,
         # Post-processing
-        min_silence_len: int = 800,   # ms of silence to split segments
-        silence_thresh_db: int = -20, # dB below which is silence
+        min_silence_len: int = 1000,   # ms of silence to split segments
+        silence_thresh_db: int = -40, # dB below which is silence
         keep_silence: int = 200       # ms padding kept around segments
     ):
         self.samplerate = samplerate

@@ -17,7 +17,7 @@ def transcribe_audio(file_path: str, api_key: str | None = None) -> str:
         response = client.audio.transcriptions.create(
             model = "gpt-4o-mini-transcribe",
             file = f,
-            response_format = "json"
+            response_format = "text"
         )
     # SDK returns a plain text string when response_format="text"
     return response if isinstance(response, str) else getattr(response, "text", "")
