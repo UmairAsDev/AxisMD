@@ -31,7 +31,7 @@ AsyncSessionLocal = async_sessionmaker(
 print(f"session {AsyncSessionLocal}")
 async def get_db():
     async with AsyncSessionLocal() as session:
-        try:
+        try:    
             yield session
         except OperationalError as e:
             logger.error(f"Database error: {e}")
