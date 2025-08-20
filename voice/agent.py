@@ -7,7 +7,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from datetime import datetime
-from my_recorder import AudioRecorder
+from audio_recorder import AudioRecorder
 from stt import transcribe_audio
 from save_notes import save_transcript
 

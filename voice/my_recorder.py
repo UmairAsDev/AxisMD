@@ -1,3 +1,18 @@
+# import speech_recognition as sr
+# mic = sr.Microphone()
+# r = sr.Recognizer()
+
+# with mic as source:
+#     audio = r.listen(
+#         source,
+#         timeout=5,
+#         )
+
+# r.recognize_tensorflow(
+#     audio_data=audio,
+#     tensor_graph="conv_actions_frozen.pb"
+# )
+
 import sounddevice as sd
 from scipy.io.wavfile import write
 
@@ -10,7 +25,10 @@ class AudioRecorder():
 
     def record_audio(self):
         print("start speaking...")
-        myrecording = sd.rec(int(self.sample_rate * self.seconds), samplerate=self.sample_rate, channels=2)
+        myrecording = sd.rec(int(self.sample_rate * self.seconds), samplerate=self.sample_rate, channels=self.channels)
         sd.wait()  # Wait until recording is finished
         my_audio = write('output.wav', self.sample_rate, myrecording)  # Save as WAV file
         return my_audio
+
+recorder = AudioRecorder()
+recorder.record_audio()
