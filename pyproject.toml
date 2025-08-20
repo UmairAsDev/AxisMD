@@ -27,7 +27,8 @@ dependencies = [
     "pydub (>=0.25.1,<0.26.0)",
     "sounddevice (>=0.5.2,<0.6.0)",
     "soundfile (>=0.13.1,<0.14.0)",
-    "noisereduce (>=3.0.3,<4.0.0)"
+    "noisereduce (>=3.0.3,<4.0.0)",
+    "speechrecognition (>=3.14.3,<4.0.0)"
 ]
 
 [tool.poetry]
