@@ -3,4 +3,4 @@ __pycache__/
 poetry.lock
 audio
 notes
-
+*.wav
