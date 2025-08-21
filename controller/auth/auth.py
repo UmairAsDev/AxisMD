@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, Request, Form
+from fastapi import Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from pydantic import ValidationError
@@ -6,10 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
 from schema.forms import LoginForm, SignupForm
 from schema.models import User
+from jose import jwt, JWTError
+from fastapi import Cookie
+from tools.settings import settings
 from database.database import get_db
 from utils.utils import get_current_user
 from utils.security import verify_password, hash_password
-from utils.jwt_handler import create_access_token
+from utils.jwt_handler import create_access_token, create_refresh_token
 
 
 
@@ -66,16 +70,42 @@ async def signup(
 
 
 @router.post("/login")
-async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db)):
+async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), response: Response =None): #type: ignore
     result = await db.execute(select(User).where(User.email == form_data.email))
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password): #type: ignore
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  
+        samesite="lax",  
+    )
+    
     return {"access_token": token, "token_type": "bearer"}
 
 
+@router.post("/refresh")
+async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+
+    try:
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    new_access_token = create_access_token({"sub": user_id})
+    return {"access_token": new_access_token, "token_type": "bearer"}
 
 
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie("refresh_token")
+    return {"message": "Logged out"}
