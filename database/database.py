@@ -35,15 +35,15 @@ async def get_db()-> AsyncIterator[AsyncSession]:
             logger.error(f"Database error: {e}")
             raise
         
-async def test_connection():
-    try:
-        async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT 1"))
-            print("Connection OK:", result.scalar())
-    except Exception as e:
-        logger.error(f"Failed to connect to DB: {e}")
+# async def test_connection():
+#     try:
+#         async with engine.connect() as conn:
+#             result = await conn.execute(text("SELECT 1"))
+#             print("Connection OK:", result.scalar())
+#     except Exception as e:
+#         logger.error(f"Failed to connect to DB: {e}")
 
-if __name__ == "__main__":
-    asyncio.run(test_connection())
+# if __name__ == "__main__":
+#     asyncio.run(test_connection())
 
 
