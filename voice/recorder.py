@@ -43,7 +43,7 @@ class AudioRecorder:
 
 
         threading.Thread(target=record_loop, daemon=True).start()
-        print("🎙️ Recording started...")
+        print("Recording started...")
 
     def stop(self):
         """Stop recording."""
@@ -66,3 +66,13 @@ class AudioRecorder:
         if self.start_time and self.end_time:
             return round(self.end_time - self.start_time, 2)
         return 0
+
+
+if __name__ == "__main__":
+    recorder = AudioRecorder()
+    recorder.start()
+    print("Recording for 50 seconds...")
+    time.sleep(50)
+    recorder.stop()
+    recorder.save_file("my_recording.wav")
+    print("Done! Saved as my_recording.wav")
