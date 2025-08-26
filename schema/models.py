@@ -1,11 +1,11 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Text, Float
-from sqlalchemy.orm import relationship
-from database.database import Base
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Text, Float, MetaData
+from sqlalchemy.orm import relationship, declarative_base
 
-
+metadata = MetaData()
+Base = declarative_base(metadata=metadata)
 
 class User(Base):
     __tablename__ = "users"
