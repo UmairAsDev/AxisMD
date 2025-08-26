@@ -24,34 +24,23 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
 
-class DoctorProfile(Base):
-    __tablename__ = "doctor_profiles"
+class UserDetail(Base):
+    __tablename__ = "user_details"
 
     
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    detail_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     specialty = Column(String(100), nullable=False)
     subspecialty = Column(String(100), nullable=True)
     objectives = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    audio_path = Column(String(500), nullable=True)
+    transcript = Column(Text, nullable=True)
     modified_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     
-    user = relationship("User", back_populates="doctor_profile")
+    user = relationship("User", back_populates="user_detail")
+    
+
+
     
     
-class AudioSession(Base):
-    __tablename__ = "audio_sessions"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    audio_file_path = Column(String(500), nullable=False) 
-    audio_filename = Column(String(255), nullable=False)
-    transcription = Column(Text, nullable=False)  
-    generated_notes = Column(Text, nullable=False)
-    output_style = Column(String(20), nullable=False) 
-    conversation_duration = Column(Float, nullable=False) 
-    file_size = Column(Integer, nullable=True)  
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    
-    user = relationship("User", back_populates="audio_sessions")
