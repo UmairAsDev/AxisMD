@@ -27,7 +27,7 @@ def audio_recorder_tool(state: dict):
     recorder["stop"]()
     
     file_name = state.get("file_name", "recording.wav")
-    file_path = os.path.join("audio_storage", state.get("user_id", "anonymous"), file_name)
+    file_path = os.path.join("audio", state.get("user_id", "anonymous"), file_name)
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     saved = recorder["save_file"](file_path)
