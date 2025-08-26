@@ -5,3 +5,5 @@ audio
 notes
 *.wav
 migrations/
+*ini
+*.pb
