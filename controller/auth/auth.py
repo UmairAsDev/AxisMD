@@ -1,37 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, Request, Form
+from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
-from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.middleware.cors import CORSMiddleware
 from schema.forms import LoginForm, SignupForm
 from schema.models import User
-from jose import jwt, JWTError
+from jose import jwt
 from fastapi import Cookie
 from tools.settings import settings
 from database.database import get_db
-from utils.utils import get_current_user
 from utils.security import verify_password, hash_password
 from utils.jwt_handler import create_access_token, create_refresh_token
 
-
-
-
-router = APIRouter()
-
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=[""],
-    allow_headers=["*"],
-)
-
-app.include_router(router, prefix="/auth", tags=["auth"])
-
-
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/signup")
 async def signup(
@@ -97,7 +78,7 @@ async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
 
     try:
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("sub")# type: ignore
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -109,3 +90,7 @@ async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
 async def logout(response: Response):
     response.delete_cookie("refresh_token")
     return {"message": "Logged out"}
+
+
+
+    

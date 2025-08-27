@@ -7,6 +7,7 @@ from sqlalchemy.orm import relationship, declarative_base
 metadata = MetaData()
 Base = declarative_base(metadata=metadata)
 
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = {"schema": "AxisMD"}
@@ -28,20 +29,22 @@ class User(Base):
     user_detail = relationship("UserDetail", back_populates="user", uselist=False)
 
 class UserDetail(Base):
-    __tablename__ = "user_details"
+    __tablename__ = "user_profile"
     __table_args__ = {"schema": "AxisMD"}
 
     detail_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("AxisMD.users.id"), unique=True, nullable=False)
     specialty = Column(String(100), nullable=False)
     subspecialty = Column(String(100), nullable=True)
+    profile_logo = Column(String(500), nullable=True)
     objectives = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     audio_path = Column(String(500), nullable=True)
     transcript = Column(Text, nullable=True)
+    output_style = Column(String(100), nullable=False)
     modified_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     
-    user = relationship("User", back_populates="user_detail")
+    user = relationship("User", back_populates="user_profile")
     
 
 
