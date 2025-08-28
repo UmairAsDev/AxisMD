@@ -58,7 +58,9 @@ async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), respon
     if not user or not verify_password(form_data.password, user.hashed_password): #type: ignore
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": str(user.id)})
+    token = create_access_token({"sub": str(user.id),
+                                 "username": user.username,
+                                 "email":user.email }) #type: ignore
     refresh_token = create_refresh_token({"sub": str(user.id)})
     response.set_cookie(
         key="refresh_token",

@@ -28,6 +28,7 @@ class User(Base):
 
     user_detail = relationship("UserDetail", back_populates="user", uselist=False)
 
+
 class UserDetail(Base):
     __tablename__ = "user_profile"
     __table_args__ = {"schema": "AxisMD"}
@@ -44,7 +45,8 @@ class UserDetail(Base):
     output_style = Column(String(100), nullable=False)
     modified_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     
-    user = relationship("User", back_populates="user_profile")
+    user = relationship("User", back_populates="user_detail")
+
     
 
 
