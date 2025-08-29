@@ -7,3 +7,10 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+
+
+hashed = hash_password("mysecret")
+print("Hashed:", hashed)
+print("Verify ok?", verify_password("mysecret", hashed))
+print("Verify fail?", verify_password("wrong", hashed))

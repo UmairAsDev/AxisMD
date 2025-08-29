@@ -54,13 +54,14 @@ async def signup(
 async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), response: Response =None): #type: ignore
     result = await db.execute(select(User).where(User.email == form_data.email))
     user = result.scalar_one_or_none()
-    
-    if not user or not verify_password(form_data.password, user.hashed_password): #type: ignore
+    print("User fetched from DB:", user.__dict__)  # Debugging line
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        print(f"password verified.....")#type: ignore
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
 
-    token = create_access_token({"sub": str(user.id),
-                                 "username": user.username,
-                                 "email":user.email }) #type: ignore
+    token = create_access_token({"sub": str(user.id)}) #type: ignore
+    print("Generated Access Token:", token)  # Debugging line
     refresh_token = create_refresh_token({"sub": str(user.id)})
     response.set_cookie(
         key="refresh_token",
