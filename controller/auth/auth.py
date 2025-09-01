@@ -55,7 +55,7 @@ async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), respon
     result = await db.execute(select(User).where(User.email == form_data.email))
     user = result.scalar_one_or_none()
     print("User fetched from DB:", user.__dict__)  # Debugging line
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):#type:ignore
         print(f"password verified.....")#type: ignore
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
