@@ -1,16 +1,39 @@
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, status, APIRouter, Request
+from fastapi_mail import MessageSchema, ConnectionConfig, FastMail
+from starlette.background import BackgroundTasks
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from schema.forms import LoginForm, SignupForm
+from pydantic import SecretStr, BaseModel
 from schema.models import User
 from jose import jwt
+from fastapi_mail import MessageSchema, MessageType
 from fastapi import Cookie
 from tools.settings import settings
 from database.database import get_db
 from utils.security import verify_password, hash_password
 from utils.jwt_handler import create_access_token, create_refresh_token
+from datetime import datetime, timedelta
+from utils.security import create_reset_token, verify_reset_token
+
+
+
+conf = ConnectionConfig(
+    MAIL_USERNAME="harrydoe@gmail.com",
+    MAIL_PASSWORD=SecretStr("harry123"), 
+    MAIL_FROM="your_email@gmail.com",
+    MAIL_PORT=465,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_STARTTLS=False,
+    MAIL_SSL_TLS=True,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
+)
+
+
+fm = FastMail(config=conf)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -60,9 +83,9 @@ async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), respon
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
 
-    token = create_access_token({"sub": str(user.id)}) #type: ignore
+    token = create_access_token({"sub": str(user.id), "username": user.username, "email":user.email}) #type: ignore
     print("Generated Access Token:", token)  # Debugging line
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id), "username": user.username, "email":user.email})
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -96,4 +119,75 @@ async def logout(response: Response):
 
 
 
-    
+class ForgotPassword(BaseModel):
+    email: str
+
+EXPIRY_TIME = 30
+
+@router.post("/forgot_password")
+async def forgot_password(
+    data: ForgotPassword,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession=Depends(get_db)
+):
+    try:
+        result = await db.execute(select(User).where(User.email == data.email))
+        user = result.scalar()
+        print("UUUUUUUUUUUUUUUUUUUUUUUU",user.email) #type:ignore
+        if user is None:
+           raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                  detail="Invalid Email address")
+        
+        secret_token = create_reset_token(email=user.email) #type:ignore
+        url = f"http://localhost:8000/auth/forgot_password/{secret_token}"
+        
+        body = f"""
+        <p>Hello,</p>
+        <p>You requested a password reset. This link will expire in {EXPIRY_TIME} minutes:</p>
+        <a href="{url}">Reset Password</a>
+        <br />
+        <p>If you didn’t request this, you can ignore this email.</p>
+        """
+
+        messages = MessageSchema(
+            subject="Password Reset Instructions",
+            recipients=[data.email],
+            body=body,  
+            subtype=MessageType.html
+        )
+
+        background_tasks.add_task(fm.send_message, messages)
+        
+        return JSONResponse(status_code=status.HTTP_200_OK,
+            content={"message": "Email has been sent", "success": True,
+                "status_code": status.HTTP_200_OK})
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+              detail="Something Unexpected, Server Error")
+        
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+
+@router.post("/reset_password")
+async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        payload = verify_reset_token(data.token)
+        print("PPPPPPPPPPPPPPPPPPPP", payload)
+        email = payload
+        print("ëeeeeeeeeeeeeeeee",email)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hashed_password = hash_password(data.new_password)#type:ignore
+    await db.commit()
+
+    return {"message": "Password reset successful"}

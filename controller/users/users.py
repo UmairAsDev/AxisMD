@@ -10,59 +10,7 @@ from schema.forms import UserProfileForm
 from database.database import get_db
 from sqlalchemy.future import select
 
-router = APIRouter( tags=["user"])
-
-
-
-# @router.post("/user_profile")
-# async def user_profile(
-#     request: Request,
-#     form: UserProfileForm,
-#     profile_logo: Optional[UploadFile] = File(None),
-#     db: AsyncSession = Depends(get_db),
-#     ):
-#     print(f"Current user ID: {request.state.user['sub']}")
-#     try:
-#         file_path = None
-#         if profile_logo:
-#             file_path = f"uploads/{profile_logo.filename}"
-#             with open(file_path, "wb+") as f:
-#                 f.write(profile_logo.file.read())
-
-    
-#         result = await db.execute(select(UserDetail).where(UserDetail.user_id == request.state.user['sub']))
-#         existing_profile = result.scalars().first()
-#         if existing_profile:
-#             raise HTTPException(status_code=400, detail="Profile already exists.")
-
-    
-#         new_profile = UserDetail(
-#             user_id=request.state.user['sub'],
-#             specialty=form.speciality,
-#             subspecialty=form.subspeciality,
-#             objectives=form.objective,
-#             output_style=form.output_style,
-#             profile_logo=file_path,
-#         )
-#         db.add(new_profile)
-#         await db.commit()
-#         await db.refresh(new_profile)
-#         return {
-#             "message": "Profile created successfully",
-#             "profile": {
-#                 "speciality": new_profile.specialty,
-#                 "subspeciality": new_profile.subspecialty,
-#                 "objective": new_profile.objectives,
-#                 "output_style": new_profile.output_style,
-#                 "profile_logo": new_profile.profile_logo,
-#                 "created_at": new_profile.created_at
-#             }
-#         }
-
-#     except Exception as e:
-#         await db.rollback()
-#         raise HTTPException(status_code=400, detail=str(e))
-
+router = APIRouter(prefix="/user",tags=["user"])
     
 
 @router.post("/user_profile")
@@ -77,20 +25,18 @@ async def user_profile(
     ):
     try:
         user_id = int(request.state.user["sub"])
-        # Save file
         file_path = None
         if profile_logo:
             file_path = f"uploads/{profile_logo.filename}"
             with open(file_path, "wb+") as f:
                 f.write(profile_logo.file.read())
 
-        # Check existing profile
+
         result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
         existing_profile = result.scalars().one_or_none()
         if existing_profile:
             raise HTTPException(status_code=400, detail="Profile already exists.")
 
-        # Create new profile
         new_profile = UserDetail(
             user_id=user_id,
             specialty=speciality,
@@ -118,3 +64,10 @@ async def user_profile(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/edit_profile")
+async def edit_profile(request: Request,db: AsyncSession = Depends(get_db)):
+    pass
+
+

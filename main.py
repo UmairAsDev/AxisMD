@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 
 from controller.auth.auth import router as auth_router
 from controller.users.users import router as user_router
-from tools.settings import settings  # 👈 make sure this points to your auth.py
+from tools.settings import settings 
 from utils.jwt_handler import verify_access_token
 
 
@@ -14,15 +14,17 @@ app = FastAPI()
 # 🔹 JWT Middleware
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    # Allow unauthenticated access to login/registration routes
-    if request.url.path.startswith("/auth/login") or request.url.path.startswith("/auth/signup"):
+    PUBLIC_ROUTES = [
+        "/auth/login",
+        "/auth/signup",
+        "/auth/forgot_password",
+        "/auth/reset_password",
+        "/open-api",
+    ]
+
+    if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
         return await call_next(request)
 
-    # You can allow other public routes here too
-    if request.url.path == "/open-api":
-        return await call_next(request)
-
-    # Check Authorization header
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return JSONResponse(status_code=401, content={"detail": "Missing or invalid token"})
