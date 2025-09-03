@@ -3,10 +3,9 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Text
+from typing import Optional
 from pydantic import BaseModel
 from schema.models import User, UserDetail
-from schema.forms import UserProfileForm
 from database.database import get_db
 from sqlalchemy.future import select
 

@@ -40,15 +40,35 @@ class UserDetail(Base):
     profile_logo = Column(String(500), nullable=True)
     objectives = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    audio_path = Column(String(500), nullable=True)
-    transcript = Column(Text, nullable=True)
     output_style = Column(String(100), nullable=False)
     modified_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     
     user = relationship("User", back_populates="user_detail")
 
-    
 
+class Notes(Base):
+    __tablename__ = "notes"
+    __table_args__ = {"schema": "AxisMD"}
+    
+    notes_id =Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_detail = Column(Integer, ForeignKey("AxisMD.user_detail.id"), unique=True, nullable=False)
+    audio_path = Column(String(500), nullable=True)
+    transcript = Column(Text, nullable=True)
+    content = Column(Text, index=True, nullable=False)
+    user_details = relationship("UserDetail", back_populates="notes_details")
+
+class Patient(Base):
+    __tablename__ = "patient"
+    __table_args__ = {"schema": "AxisMD"}
+    
+    patient_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_firstname = Column(String(255), index=True, nullable=False)
+    patient_lastname = Column(String(255), index=True, nullable=False)
+    physician = Column(Integer, ForeignKey("AxisMD.user.id"), index=True, nullable=False)
+    diagnosis = Column(Text, index=True, nullable=False)
+    icd_code = Column(String(255), index=True, nullable=False)
+    procedure_code = Column(String(255), index=True, nullable=False)
+    
 
     
     

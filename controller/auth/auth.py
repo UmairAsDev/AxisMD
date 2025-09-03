@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status, APIRouter, Request
+from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi_mail import MessageSchema, ConnectionConfig, FastMail
 from starlette.background import BackgroundTasks
 from fastapi import Response
