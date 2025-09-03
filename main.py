@@ -6,6 +6,7 @@ from jose import jwt, JWTError
 from controller.auth.auth import router as auth_router
 from controller.users.users import router as user_router
 from controller.notes.notes import router as notes_router
+from controller.patient.patient import router as patient_router
 from tools.settings import settings 
 from utils.jwt_handler import verify_access_token
 
@@ -44,6 +45,7 @@ async def auth_middleware(request: Request, call_next):
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(notes_router)
+app.include_router(patient_router)
 
 
 # 🔹 CORS

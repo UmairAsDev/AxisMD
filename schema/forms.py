@@ -24,3 +24,7 @@ class UserProfileForm(BaseModel):
     subspeciality: str = Field(..., description="Subspeciality")
     objective: Text = Field(..., description="Objective")
     output_style :Literal['Comprehensive', 'Focused', 'Categorized'] = Field(..., description="Preferred Output Style")
+    
+
+class EditProfile(BaseModel):
+    pass

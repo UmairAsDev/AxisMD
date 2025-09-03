@@ -2,8 +2,8 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from recorder import audio_processor
-from prompt_template import ClinicalPromptBuilder
+from app.recorder import audio_processor
+from app.prompt_template import ClinicalPromptBuilder
 import time
 import json
 from dotenv import load_dotenv

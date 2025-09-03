@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +8,7 @@ from typing import Optional
 from pydantic import BaseModel
 from schema.models import User, UserDetail
 from database.database import get_db
-from sqlalchemy.future import select
+from sqlalchemy import select, update, func
 
 router = APIRouter(prefix="/user",tags=["user"])
     
@@ -65,8 +66,135 @@ async def user_profile(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/edit_profile")
-async def edit_profile(request: Request,db: AsyncSession = Depends(get_db)):
-    pass
+
+@router.put("/edit_user_profile")
+@router.patch("/user_profile")
+async def edit_user_profile(
+    request: Request,
+    specialty:str = Form(None, description="specialty"),
+    subspecialty: str = Form(None, description="subspecialty"),
+    objective: str = Form(None, description="objectives"),
+    output_style: str = Form(None, description="Style"),
+    profile_logo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    ):
+    try:
+        user_id = int(request.state.user["sub"])
+        result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
+        existing_profile = result.scalars().one()
+
+        
+        if not existing_profile:
+            raise HTTPException(status_code=404, detail="Profile not found. Please create a profile first.")
+        
+        file_path = existing_profile.profile_logo
+        if profile_logo:
+            if existing_profile.profile_logo and os.path.exists(existing_profile.profile_logo):#type:ignore
+                os.remove(existing_profile.profile_logo)#type:ignore
+            
+            file_path = f"uploads/{user_id}_{profile_logo.filename}"
+            print(f"profile file path....{file_path}")
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, "wb+") as f:
+                shutil.copyfileobj(profile_logo.file, f)
+        
+
+   
+        update_data = {}
+        if specialty is not None:
+            update_data["specialty"] = specialty
+        if subspecialty is not None:
+            update_data["subspecialty"] = subspecialty
+        if objective is not None:
+            update_data["objectives"] = objective
+        if output_style is not None:
+            update_data["output_style"] = output_style
+        if profile_logo is not None:
+            update_data["profile_logo"] = file_path
+        
+        if update_data:
+            await db.execute(update(UserDetail).where(UserDetail.user_id == user_id).values(**update_data))
+            await db.commit()
+            
+            result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
+            updated_profile = result.scalars().one()
+            
+            return {
+                "message": "Profile updated successfully",
+                "profile": {
+                    "specialty": updated_profile.specialty,
+                    "subspecialty": updated_profile.subspecialty,
+                    "objective": updated_profile.objectives,
+                    "output_style": updated_profile.output_style,
+                    "profile_logo": updated_profile.profile_logo,
+                    "updated_at": updated_profile.created_at
+                }
+            }
+        else:
+            return {
+                "message": "No changes provided",
+                "profile": {
+                    "specialty": existing_profile.specialty,
+                    "subspecialty": existing_profile.subspecialty,
+                    "objective": existing_profile.objectives,
+                    "output_style": existing_profile.output_style,
+                    "profile_logo": existing_profile.profile_logo
+                }
+            }
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    
+
+@router.get("/get_user_profile")
+async def get_profile(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    print("ggggggggggggggggggggggggg")
+    user_id = int(request.state.user["sub"])
+    result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
+    profile = result.scalars().first()
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    return {
+        "specialty": profile.specialty,
+        "subspecialty": profile.subspecialty,
+        "objective": profile.objectives,
+        "output_style": profile.output_style,
+        "profile_logo": profile.profile_logo,
+        "created_at": profile.created_at,
+        "updated_at": profile.modified_at
+    }
 
 
+
+
+@router.delete("/user_profile/logo")
+async def delete_profile_logo(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    user_id = int(request.state.user["sub"])
+    result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
+    profile = result.scalars().one_or_none()
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    if profile.profile_logo and os.path.exists(profile.profile_logo):#type:ignore
+        os.remove(profile.profile_logo)#type:ignore
+    
+
+    stmt = (
+        update(UserDetail)
+        .where(UserDetail.user_id == user_id)
+        .values(profile_logo=None)
+    )
+    await db.execute(stmt)
+    await db.commit()
+    
+    return {"message": "Profile logo deleted successfully"}

@@ -1,5 +1,8 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from langgraph.graph import StateGraph, END
-from tool_node import audio_recorder_tool, audio_transcribe_tool, prompt_builder_node, llm_node
+from app.tool_node import audio_recorder_tool, audio_transcribe_tool, prompt_builder_node, llm_node
 from typing import Dict
 
 
