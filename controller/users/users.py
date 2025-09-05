@@ -39,8 +39,8 @@ async def user_profile(
 
         new_profile = UserDetail(
             user_id=user_id,
-            specialty=speciality,
-            subspecialty=subspeciality,
+            speciality=speciality,
+            subspeciality=subspeciality,
             objectives=objective,
             output_style=output_style,
             profile_logo=file_path
@@ -52,8 +52,8 @@ async def user_profile(
         return {
             "message": "Profile created successfully",
             "profile": {
-                "speciality": new_profile.specialty,
-                "subspeciality": new_profile.subspecialty,
+                "speciality": new_profile.speciality,
+                "subspeciality": new_profile.subspeciality,
                 "objective": new_profile.objectives,
                 "output_style": new_profile.output_style,
                 "profile_logo": new_profile.profile_logo,
@@ -71,8 +71,8 @@ async def user_profile(
 @router.patch("/user_profile")
 async def edit_user_profile(
     request: Request,
-    specialty:str = Form(None, description="specialty"),
-    subspecialty: str = Form(None, description="subspecialty"),
+    speciality:str = Form(None, description="speciality"),
+    subspeciality: str = Form(None, description="subspeciality"),
     objective: str = Form(None, description="objectives"),
     output_style: str = Form(None, description="Style"),
     profile_logo: Optional[UploadFile] = File(None),
@@ -101,10 +101,10 @@ async def edit_user_profile(
 
    
         update_data = {}
-        if specialty is not None:
-            update_data["specialty"] = specialty
-        if subspecialty is not None:
-            update_data["subspecialty"] = subspecialty
+        if speciality is not None:
+            update_data["speciality"] = speciality
+        if subspeciality is not None:
+            update_data["subspeciality"] = subspeciality
         if objective is not None:
             update_data["objectives"] = objective
         if output_style is not None:
@@ -122,8 +122,8 @@ async def edit_user_profile(
             return {
                 "message": "Profile updated successfully",
                 "profile": {
-                    "specialty": updated_profile.specialty,
-                    "subspecialty": updated_profile.subspecialty,
+                    "speciality": updated_profile.speciality,
+                    "subspeciality": updated_profile.subspeciality,
                     "objective": updated_profile.objectives,
                     "output_style": updated_profile.output_style,
                     "profile_logo": updated_profile.profile_logo,
@@ -134,8 +134,8 @@ async def edit_user_profile(
             return {
                 "message": "No changes provided",
                 "profile": {
-                    "specialty": existing_profile.specialty,
-                    "subspecialty": existing_profile.subspecialty,
+                    "speciality": existing_profile.speciality,
+                    "subspeciality": existing_profile.subspeciality,
                     "objective": existing_profile.objectives,
                     "output_style": existing_profile.output_style,
                     "profile_logo": existing_profile.profile_logo
@@ -152,7 +152,6 @@ async def get_profile(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    print("ggggggggggggggggggggggggg")
     user_id = int(request.state.user["sub"])
     result = await db.execute(select(UserDetail).where(UserDetail.user_id == user_id))
     profile = result.scalars().first()
@@ -161,8 +160,8 @@ async def get_profile(
         raise HTTPException(status_code=404, detail="Profile not found")
     
     return {
-        "specialty": profile.specialty,
-        "subspecialty": profile.subspecialty,
+        "speciality": profile.speciality,
+        "subspeciality": profile.subspeciality,
         "objective": profile.objectives,
         "output_style": profile.output_style,
         "profile_logo": profile.profile_logo,

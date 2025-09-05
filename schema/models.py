@@ -34,8 +34,8 @@ class UserDetail(Base):
 
     detail_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("AxisMD.users.id"), index=True, nullable=False)
-    specialty = Column(String(100), nullable=False)
-    subspecialty = Column(String(100), nullable=True)
+    speciality = Column(String(100), nullable=False)
+    subspeciality = Column(String(100), nullable=True)
     profile_logo = Column(String(500), nullable=True)
     objectives = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
