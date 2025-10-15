@@ -4,19 +4,23 @@ import asyncio
 sys.path.append(os.path.dirname(os.path.abspath(".../")))
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.exc import OperationalError
 from tools.tools import TOOLS_CFG
 from typing import AsyncIterator
-from sqlalchemy import text
-
+from sqlalchemy import text, MetaData
+from schema.models import Base
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
 
 
 database_url = f"postgresql+asyncpg://{TOOLS_CFG.db_username}:{TOOLS_CFG.db_password}@{TOOLS_CFG.host}:{TOOLS_CFG.port}/{TOOLS_CFG.db_name}"
 engine = create_async_engine(
     database_url,
-    echo=True
+    echo=True,
+    future=True,
 )
 print(database_url)
 
@@ -25,6 +29,21 @@ AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     expire_on_commit=False,
 )
+
+
+
+
+async def init_db(drop: bool = False):
+    """Initialize database schema from models."""
+    async with engine.begin() as conn:
+        if drop:
+            # ⚠️ Dangerous in prod: drops all tables in schema
+            await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    print("✅ Database schema initialized")
+
+
+
 
 async def get_db()-> AsyncIterator[AsyncSession]:
     async with AsyncSessionLocal() as session:
@@ -44,6 +63,16 @@ async def test_connection():
         logger.error(f"Failed to connect to DB: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(test_connection())
+    import sys
+    
+    async def main():
+        if "init" in sys.argv:
+            await init_db(drop=False)
+        elif "test" in sys.argv:
+            await test_connection()
+    
+    asyncio.run(main())
+
+
 
 

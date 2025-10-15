@@ -1,10 +1,10 @@
 .env
 __pycache__/
 poetry.lock
+uploads/
+*.wav
 migrations/
-
-
-alembic.ini
-alembic_version/
-env/
+*ini
+*.pb
+env
 uploads/
