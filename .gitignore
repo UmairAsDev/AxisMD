@@ -6,4 +6,5 @@ uploads/
 migrations/
 *ini
 *.pb
+env
 

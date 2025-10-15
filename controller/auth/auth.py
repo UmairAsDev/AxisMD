@@ -20,6 +20,7 @@ from utils.security import create_reset_token, verify_reset_token
 
 
 
+
 conf = ConnectionConfig(
     MAIL_USERNAME="harrydoe@gmail.com",
     MAIL_PASSWORD=SecretStr("harry123"), 

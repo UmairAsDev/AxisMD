@@ -78,4 +78,14 @@ def audio_processor(sample_rate=16000, frame_duration=30):
         "get_conversation_time": get_conversation_time,
     }
 
+if __name__ == "__main__":
+    processor = audio_processor()
 
+
+    processor["start"]()
+    time.sleep(25)  
+    processor["stop"]()
+
+    filename = processor["save_file"]("speech.wav")
+
+    print("Conversation length:", processor["get_conversation_time"](), "seconds")
