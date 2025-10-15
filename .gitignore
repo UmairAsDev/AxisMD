@@ -2,3 +2,9 @@
 __pycache__/
 poetry.lock
 migrations/
+
+
+alembic.ini
+alembic_version/
+env/
+uploads/
