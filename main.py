@@ -22,7 +22,12 @@ async def auth_middleware(request: Request, call_next):
         "/auth/forgot_password",
         "/auth/reset_password",
         "/open-api",
+        "/docs",         
+        "/openapi.json",  
+        "/redoc",         
+        "/favicon.ico"    
     ]
+
 
     if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
         return await call_next(request)
