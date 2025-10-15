@@ -4,8 +4,8 @@ openai
 uvicorn 
 pydantic 
 pydantic-settings
-PyAudio
-pyaudio 
+# PyAudio
+# pyaudio 
 python-dotenv 
 pyprojroot 
 pyyaml 
