@@ -3,7 +3,8 @@ sqlalchemy
 openai 
 uvicorn 
 pydantic 
-pydantic-settings 
+pydantic-settings
+PyAudio
 pyaudio 
 python-dotenv 
 pyprojroot 
