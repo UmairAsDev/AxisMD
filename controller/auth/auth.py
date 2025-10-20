@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from schema.forms import LoginForm, SignupForm
-from pydantic import SecretStr, BaseModel
+from pydantic import SecretStr, BaseModel, Field
 from schema.models import User
 from jose import jwt
 from fastapi_mail import MessageSchema, MessageType
@@ -167,26 +167,35 @@ async def forgot_password(
               detail="Something Unexpected, Server Error")
         
 
+
 class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str
+    token: str = Field(..., description="Password reset token")
+    old_password: str = Field(..., min_length=6, description="Old password")
+    new_password: str = Field(..., min_length=8, description="New password (min 8 chars)")
 
 
-
-@router.post("/reset_password")
+@router.post("/reset_password", status_code=status.HTTP_200_OK)
 async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Reset user password after validating the token and old password.
+    """
+
     try:
-        payload = verify_reset_token(data.token)
-        print("PPPPPPPPPPPPPPPPPPPP", payload)
-        email = payload
-        print("ëeeeeeeeeeeeeeeee",email)
+        email = verify_reset_token(data.token)
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
 
     result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar()
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(data.old_password, user.hashed_password):#type:ignore
+        raise HTTPException(status_code=401, detail="Old password is incorrect")
+
+    if verify_password(data.new_password, user.hashed_password):#type:ignore
+        raise HTTPException(status_code=400, detail="New password cannot be the same as the old password")
 
     user.hashed_password = hash_password(data.new_password)#type:ignore
     await db.commit()

@@ -13,7 +13,7 @@ from utils.jwt_handler import verify_access_token
 
 app = FastAPI()
 
-# 🔹 JWT Middleware
+
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     PUBLIC_ROUTES = [
@@ -46,14 +46,14 @@ async def auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# 🔹 Include Routers
+
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(notes_router)
 app.include_router(patient_router)
 
 
-# 🔹 CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -63,7 +63,6 @@ app.add_middleware(
 )
 
 
-# 🔹 Run
 def start():
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
