@@ -24,12 +24,12 @@ def verify_reset_token(token: str):
     except:
         return None
 
-hashed = hash_password("mysecret")
-email = "harrydoe@gmail.com"
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhcnJ5ZG9lQGdtYWlsLmNvbSIsImV4cCI6MTc1NjgzMjA2MH0.MZjvxwpDwet4d9by8clek5ejV6UlH6JvcN9nMHRSTUI"
-print("Hashed:", hashed)
-print("Verify ok?", verify_password("mysecret", hashed))
-print("Verify fail?", verify_password("wrong", hashed))
-print("reset token", create_reset_token(email))
-print("verify reset token", verify_reset_token(token))
+# hashed = hash_password("mysecret")
+# email = "harrydoe@gmail.com"
+# token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhcnJ5ZG9lQGdtYWlsLmNvbSIsImV4cCI6MTc1NjgzMjA2MH0.MZjvxwpDwet4d9by8clek5ejV6UlH6JvcN9nMHRSTUI"
+# print("Hashed:", hashed)
+# print("Verify ok?", verify_password("mysecret", hashed))
+# print("Verify fail?", verify_password("wrong", hashed))
+# print("reset token", create_reset_token(email))
+# print("verify reset token", verify_reset_token(token))
 

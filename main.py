@@ -40,6 +40,7 @@ async def auth_middleware(request: Request, call_next):
     try:
         payload = verify_access_token(token)
         request.state.user = payload
+        print("payload", payload)
     except JWTError:
         return JSONResponse(status_code=403, content={"detail": "Invalid or expired token"})
 

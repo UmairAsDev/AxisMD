@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, status, APIRouter, Header
 from fastapi_mail import MessageSchema, ConnectionConfig, FastMail
 from starlette.background import BackgroundTasks
 from fastapi import Response
@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from schema.forms import LoginForm, SignupForm
-from pydantic import SecretStr, BaseModel, Field
+from pydantic import SecretStr, BaseModel, Field,  EmailStr
 from schema.models import User
 from jose import jwt
 from fastapi_mail import MessageSchema, MessageType
@@ -22,13 +22,13 @@ from utils.security import create_reset_token, verify_reset_token
 
 
 conf = ConnectionConfig(
-    MAIL_USERNAME="harrydoe@gmail.com",
-    MAIL_PASSWORD=SecretStr("harry123"), 
-    MAIL_FROM="your_email@gmail.com",
-    MAIL_PORT=465,
+    MAIL_USERNAME="umairashrafbsse@gmail.com",
+    MAIL_PASSWORD=SecretStr("qmjm qiiq pxnf mrlu"), 
+    MAIL_FROM="umairashrafbsse@gmail.com",
+    MAIL_PORT=587,
     MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
@@ -56,6 +56,15 @@ async def signup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+
+    result = await db.execute(select(User).where(User.phone_number == form.phone_number))
+    existing_user_phone = result.scalar_one_or_none()
+    if existing_user_phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number already registered"
+        )
+        
     new_user = User(
         username=form.username,
         first_name=form.first_name,
@@ -75,27 +84,42 @@ async def signup(
 
 
 @router.post("/login")
-async def login(form_data: LoginForm, db: AsyncSession = Depends(get_db), response: Response =None): #type: ignore
+async def login(
+    form_data: LoginForm,
+    db: AsyncSession = Depends(get_db),
+    response: Response = None,  # type: ignore
+):
     result = await db.execute(select(User).where(User.email == form_data.email))
     user = result.scalar_one_or_none()
-    print("User fetched from DB:", user.__dict__)  # Debugging line
-    if not user or not verify_password(form_data.password, user.hashed_password):#type:ignore
-        print(f"password verified.....")#type: ignore
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
 
-    token = create_access_token({"sub": str(user.id), "username": user.username, "email":user.email}) #type: ignore
-    print("Generated Access Token:", token)  # Debugging line
-    refresh_token = create_refresh_token({"sub": str(user.id), "username": user.username, "email":user.email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    print("User fetched from DB:", user.__dict__)  
+
+    if not verify_password(form_data.password, user.hashed_password):  # type: ignore
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": str(user.id), "username": user.username, "email": user.email})  # type: ignore
+    refresh_token = create_refresh_token({"sub": str(user.id), "username": user.username, "email": user.email})
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,  
-        samesite="lax",  
+        secure=True,
+        samesite="lax",
     )
-    
+
     return {"access_token": token, "token_type": "bearer"}
+
+
+
+
+
+
+
 
 
 @router.post("/refresh")
@@ -120,84 +144,106 @@ async def logout(response: Response):
 
 
 
-class ForgotPassword(BaseModel):
-    email: str
 
-EXPIRY_TIME = 30
 
-@router.post("/forgot_password")
-async def forgot_password(
-    data: ForgotPassword,
-    background_tasks: BackgroundTasks,
-    db: AsyncSession=Depends(get_db)
-):
-    try:
-        result = await db.execute(select(User).where(User.email == data.email))
-        user = result.scalar()
-        print("UUUUUUUUUUUUUUUUUUUUUUUU",user.email) #type:ignore
-        if user is None:
-           raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                  detail="Invalid Email address")
-        
-        secret_token = create_reset_token(email=user.email) #type:ignore
-        url = f"http://localhost:8000/auth/forgot_password/{secret_token}"
-        
-        body = f"""
-        <p>Hello,</p>
-        <p>You requested a password reset. This link will expire in {EXPIRY_TIME} minutes:</p>
-        <a href="{url}">Reset Password</a>
-        <br />
-        <p>If you didn’t request this, you can ignore this email.</p>
-        """
 
-        messages = MessageSchema(
-            subject="Password Reset Instructions",
-            recipients=[data.email],
-            body=body,  
-            subtype=MessageType.html
-        )
 
-        background_tasks.add_task(fm.send_message, messages)
-        
-        return JSONResponse(status_code=status.HTTP_200_OK,
-            content={"message": "Email has been sent", "success": True,
-                "status_code": status.HTTP_200_OK})
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-              detail="Something Unexpected, Server Error")
-        
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str = Field(..., description="Password reset token")
-    old_password: str = Field(..., min_length=6, description="Old password")
     new_password: str = Field(..., min_length=8, description="New password (min 8 chars)")
+    confirm_password: str = Field(..., min_length=8, description="Confirm new password (min 8 chars)")
+    
 
 
-@router.post("/reset_password", status_code=status.HTTP_200_OK)
-async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+@router.post("/forgot_password")
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    token = create_reset_token(user.email)#type:ignore
+    reset_link = f"http://localhost:5000/auth/reset_password?token={token}"  
+
+    html = f"""
+    <html>
+        <body>
+            <h3>Password Reset Request</h3>
+            <p>Click below to reset your password. This link expires in 30 minutes.</p>
+            <a href="{reset_link}">Reset Password</a>
+            <br><br>
+            <p>If you didn’t request this, ignore this email.</p>
+        </body>
+    </html>
     """
-    Reset user password after validating the token and old password.
-    """
+
+    message = MessageSchema(
+        subject="Password Reset Instructions",
+        recipients=[data.email],
+        body=html,
+        subtype=MessageType.html,
+    )
+
+    background_tasks.add_task(fm.send_message, message)
+
+    return {"message": "Password reset email sent successfully."}
+
+
+
+from fastapi import Query
+
+
+
+# @router.get("/reset_password")
+# async def verify_reset_token_link(token: str = Query(...)):
+#     try:
+#         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+#         print("pppppppppppppppppppppppppp", payload)
+#         return {"message": "Valid token", "email": payload.get("email")}
+#     except Exception:
+#         raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+
+
+
+
+
+@router.post("/reset_password")
+async def reset_password(
+    data: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    token: str = Query(None),
+    authorization: str | None = Header(None),
+):
+    print(token)
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+    elif not token:
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
 
     try:
-        email = verify_reset_token(data.token)
+        email = verify_reset_token(token)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not verify_password(data.old_password, user.hashed_password):#type:ignore
-        raise HTTPException(status_code=401, detail="Old password is incorrect")
-
-    if verify_password(data.new_password, user.hashed_password):#type:ignore
-        raise HTTPException(status_code=400, detail="New password cannot be the same as the old password")
+    
+    if data.new_password != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
 
     user.hashed_password = hash_password(data.new_password)#type:ignore
     await db.commit()
 
-    return {"message": "Password reset successful"}
+    return {"message": "Password reset successful."}
